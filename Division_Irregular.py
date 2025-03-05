@@ -2,56 +2,85 @@ import random
 import csv
 
 
-def encontrar_numeros_con_diferencia(objetivo,numero_divisiones, porcentaje_diferencia=0.1, intentos=10000000000):
-    # Calcula la media y el rango de diferencia basado en el objetivo y el porcentaje de diferencia
-    media = objetivo / numero_divisiones
-    rango_diferencia = media * porcentaje_diferencia
+def encontrar_numeros_con_diferencia(objetivo, numero_divisiones, porcentaje_diferencia=0.1, max_intentos=1000):
+    # Pre-cálculo de valores importantes
+    m = objetivo / numero_divisiones
+    m_low = m * (1 - porcentaje_diferencia)
+    m_high = m * (1 + porcentaje_diferencia)
 
-    # Intenta encontrar un conjunto de números que sumen al objetivo
-    for _ in range(intentos):
+    for _ in range(max_intentos):
         numeros = []
-        suma_actual = 0
+        suma_actual = 0.0
+        valido = True
 
-        # Genera 24 números aleatorios dentro del rango especificado
-        for _ in range(numero_divisiones):
+        # Generar los primeros n-1 números con restricciones
+        for i in range(numero_divisiones - 1):
+            numeros_restantes = numero_divisiones - i
+            suma_restante = objetivo - suma_actual
 
-            numero = random.uniform(media - rango_diferencia, media + rango_diferencia)
+            # Calcular límites para el número actual
+            min_actual = max(m_low, suma_restante - (numeros_restantes - 1) * m_high)
+            max_actual = min(m_high, suma_restante - (numeros_restantes - 1) * m_low)
 
-            # Si el número generado no excede el objetivo, se añade a la lista
-            if suma_actual + numero <= objetivo:
-                numeros.append(numero)
-                suma_actual += numero
-            else:
+            if min_actual > max_actual:
+                valido = False
+                break
 
-                # Si el número excede el objetivo, se genera un nuevo número dentro de un rango más pequeño
-                numero = random.uniform(media - rango_diferencia, media)
-                if suma_actual + numero <= objetivo:
-                    numeros.append(numero)
-                    suma_actual += numero
-                else:
-                    break
-        # Si la suma de los números generados está cerca del objetivo, se devuelve la lista
-        if abs(suma_actual - objetivo) <= 0.01:
-            return [round(num, 2) for num in numeros]
-    # Si no se encuentra un conjunto de números que sumen al objetivo, se devuelve None
+            # Generar número dentro del rango permitido
+            numero = random.uniform(min_actual, max_actual)
+            numeros.append(numero)
+            suma_actual += numero
+
+        if not valido:
+            continue
+
+        # Calcular y validar el último número
+        ultimo_numero = objetivo - suma_actual
+        if not (m_low <= ultimo_numero <= m_high):
+            continue
+
+        numeros.append(ultimo_numero)
+
+        # Aproximar y ajustar decimales
+        numeros_redondeados = [round(num, 2) for num in numeros]
+        suma_redondeada = sum(numeros_redondeados)
+        diferencia = round(objetivo - suma_redondeada, 2)
+
+        if diferencia == 0:
+            return numeros_redondeados
+
+        # Ajustar último número manteniendo la precisión
+        nuevo_ultimo = numeros_redondeados[-1] + diferencia
+        if not (m_low <= nuevo_ultimo <= m_high):
+            continue
+
+        numeros_redondeados[-1] = round(nuevo_ultimo, 2)
+        
+        # Verificación final
+        if sum(numeros_redondeados) == objetivo:
+            return numeros_redondeados
+
     return None
 
 
+# Interfaz de usuario y ejecución
 valor_objetivo = int(input("Ingrese el valor objetivo: "))
 numero_divisiones = int(input("Ingrese el numero de divisiones: "))
-numeros_con_diferencia = encontrar_numeros_con_diferencia(
-    valor_objetivo,numero_divisiones, porcentaje_diferencia=0.1
+
+resultado = encontrar_numeros_con_diferencia(
+    valor_objetivo, numero_divisiones, porcentaje_diferencia=0.1
 )
 
-if numeros_con_diferencia is not None:
-    print(f"Conjunto de números que suman {valor_objetivo}: {numeros_con_diferencia}")
-    print(f"Suma del conjunto: {sum(numeros_con_diferencia)}")
+if resultado is not None:
+    print(f"Conjunto válido encontrado: {resultado}")
+    print(f"Suma verificada: {sum(resultado):.2f}")
 
     # Exportar a CSV
     with open("resultados.csv", "w", newline="") as csvfile:
         writer = csv.writer(csvfile)
-        writer.writerow(["Posicion", "Numero"])
-        for i, numero in enumerate(numeros_con_diferencia):
+        writer.writerow(["Posición", "Numero"])
+        for i, numero in enumerate(resultado):
             writer.writerow([i + 1, numero])
+        writer.writerow(["Total", sum(resultado)])
 else:
     print("No se encontró un conjunto válido.")
