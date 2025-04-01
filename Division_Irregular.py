@@ -2,85 +2,85 @@ import random
 import csv
 
 
-def encontrar_numeros_con_diferencia(objetivo, numero_divisiones, porcentaje_diferencia=0.1, max_intentos=1000):
-    # Pre-cálculo de valores importantes
-    m = objetivo / numero_divisiones
-    m_low = m * (1 - porcentaje_diferencia)
-    m_high = m * (1 + porcentaje_diferencia)
+def find_numbers_with_differential(objective, division_num, diferencial_percent=0.1, max_try=1000):
+    # Pre-calculation of important values
+    m = objective / division_num
+    m_low = m * (1 - diferencial_percent)
+    m_high = m * (1 + diferencial_percent)
 
-    for _ in range(max_intentos):
-        numeros = []
+    for _ in range(max_try):
+        numbers = []
         suma_actual = 0.0
-        valido = True
+        valid = True
 
-        # Generar los primeros n-1 números con restricciones
-        for i in range(numero_divisiones - 1):
-            numeros_restantes = numero_divisiones - i
-            suma_restante = objetivo - suma_actual
+        # Generate the first n-1 numbers with restrictions
+        for i in range(division_num - 1):
+            rest_numbers = division_num - i
+            rest_sum = objective - suma_actual
 
             # Calcular límites para el número actual
-            min_actual = max(m_low, suma_restante - (numeros_restantes - 1) * m_high)
-            max_actual = min(m_high, suma_restante - (numeros_restantes - 1) * m_low)
+            min_actual = max(m_low, rest_sum - (rest_numbers - 1) * m_high)
+            max_actual = min(m_high, rest_sum - (rest_numbers - 1) * m_low)
 
             if min_actual > max_actual:
-                valido = False
+                valid = False
                 break
 
-            # Generar número dentro del rango permitido
-            numero = random.uniform(min_actual, max_actual)
-            numeros.append(numero)
-            suma_actual += numero
+            # Generate number within the allowed range
+            number = random.uniform(min_actual, max_actual)
+            numbers.append(number)
+            suma_actual += number
 
-        if not valido:
+        if not valid:
             continue
 
-        # Calcular y validar el último número
-        ultimo_numero = objetivo - suma_actual
-        if not (m_low <= ultimo_numero <= m_high):
+        # Calculate and validate the last number
+        ultimo_number = objective - suma_actual
+        if not (m_low <= ultimo_number <= m_high):
             continue
 
-        numeros.append(ultimo_numero)
+        numbers.append(ultimo_number)
 
-        # Aproximar y ajustar decimales
-        numeros_redondeados = [round(num, 2) for num in numeros]
-        suma_redondeada = sum(numeros_redondeados)
-        diferencia = round(objetivo - suma_redondeada, 2)
+        # Approximate and adjust decimals
+        numbers_redondeados = [round(num, 2) for num in numbers]
+        suma_redondeada = sum(numbers_redondeados)
+        diferencia = round(objective - suma_redondeada, 2)
 
         if diferencia == 0:
-            return numeros_redondeados
+            return numbers_redondeados
 
-        # Ajustar último número manteniendo la precisión
-        nuevo_ultimo = numeros_redondeados[-1] + diferencia
+        # Adjust last number while maintaining precision
+        nuevo_ultimo = numbers_redondeados[-1] + diferencia
         if not (m_low <= nuevo_ultimo <= m_high):
             continue
 
-        numeros_redondeados[-1] = round(nuevo_ultimo, 2)
+        numbers_redondeados[-1] = round(nuevo_ultimo, 2)
         
-        # Verificación final
-        if sum(numeros_redondeados) == objetivo:
-            return numeros_redondeados
+        # Final verification
+        if sum(numbers_redondeados) == objective:
+            return numbers_redondeados
 
     return None
 
 
-# Interfaz de usuario y ejecución
-valor_objetivo = int(input("Ingrese el valor objetivo: "))
-numero_divisiones = int(input("Ingrese el numero de divisiones: "))
+# UI
+valor_objective = int(input("Enter the target value: "))
+division_num = int(input("Enter the number of divisions: "))
 
-resultado = encontrar_numeros_con_diferencia(
-    valor_objetivo, numero_divisiones, porcentaje_diferencia=0.1
+result = find_numbers_with_differential(
+    valor_objective, division_num, diferencial_percent=0.1
 )
 
-if resultado is not None:
-    print(f"Conjunto válido encontrado: {resultado}")
-    print(f"Suma verificada: {sum(resultado):.2f}")
+if result is not None:
+    print(f"Valid set found: {result}")
+    print(f"Verified sum: {sum(result):.2f}")
 
-    # Exportar a CSV
-    with open("resultados.csv", "w", newline="") as csvfile:
+    # Export to CSV
+    with open("results.csv", "w", newline="") as csvfile:
         writer = csv.writer(csvfile)
-        writer.writerow(["Posición", "Numero"])
-        for i, numero in enumerate(resultado):
-            writer.writerow([i + 1, numero])
-        writer.writerow(["Total", sum(resultado)])
+        writer.writerow(["Position", "Number"])
+        for i, number in enumerate(result):
+            writer.writerow([i + 1, number])
+        writer.writerow(["Total", sum(result)])
 else:
-    print("No se encontró un conjunto válido.")
+    print("No valid set found.")
